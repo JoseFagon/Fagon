@@ -70,8 +70,8 @@ export default function DashboardProjectsPage() {
                 setProjects(response.data.projects);
                 setPagination({
                     total: response.data.meta?.resource?.total || 0,
-                    page: 1,
-                    totalPages: 1,
+                    page: currentPage,
+                    totalPages: response.data.meta?.resource?.totalPages || 1, // Use o totalPages da API
                 });
             } catch (err) {
                 console.error('Erro ao carregar projetos:', err);
