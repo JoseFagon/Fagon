@@ -61,7 +61,7 @@ export const updateLocationSchema = z
             });
         }
 
-        if (!isFacade && (!data.height || data.height.trim() === '')) {
+        if (!isExternal && (!data.height || data.height.trim() === '')) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'A altura é obrigatória',

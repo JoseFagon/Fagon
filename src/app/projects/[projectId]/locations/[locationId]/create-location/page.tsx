@@ -582,30 +582,28 @@ export default function CreateLocationPage() {
                     </div>
                 )}
 
-                {!isFacade && (
-                    <div>
-                        <div className="w-full relative flex justify-start py-3">
-                            <h2 className="text-2xl font-sans bg-background px-2 ml-8">
-                                Altura (m)
-                            </h2>
-                            <hr className="w-full h-px absolute border-foreground top-1/2 left-0 -z-10" />
-                        </div>
-                        <CustomFormInput
-                            icon={<RulerIcon />}
-                            label="Altura (Pé direito)*"
-                            registration={register('height')}
-                            onChange={(e) =>
-                                handleMaskedChange('height', e, setValue)
-                            }
-                            defaultValue={location?.height || ''}
-                            error={errors.height?.message}
-                            id="HeightInput"
-                            inputMode="numeric"
-                            disabled={isLoading}
-                            maxLength={6}
-                        />
+                <div>
+                    <div className="w-full relative flex justify-start py-3">
+                        <h2 className="text-2xl font-sans bg-background px-2 ml-8">
+                            Altura (m)
+                        </h2>
+                        <hr className="w-full h-px absolute border-foreground top-1/2 left-0 -z-10" />
                     </div>
-                )}
+                    <CustomFormInput
+                        icon={<RulerIcon />}
+                        label="Altura (Pé direito)*"
+                        registration={register('height')}
+                        onChange={(e) =>
+                            handleMaskedChange('height', e, setValue)
+                        }
+                        defaultValue={location?.height || ''}
+                        error={errors.height?.message}
+                        id="HeightInput"
+                        inputMode="decimal"
+                        disabled={isLoading}
+                        maxLength={6}
+                    />
+                </div>
 
                 <div className="space-y-6">
                     <div className="w-full relative flex justify-start">
