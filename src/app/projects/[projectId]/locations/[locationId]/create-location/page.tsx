@@ -655,7 +655,11 @@ export default function CreateLocationPage() {
                     </div>
                     <CustomFormInput
                         icon={<RulerIcon />}
-                        label="Altura (Pé direito)*"
+                        label={
+                            isExternal
+                                ? 'Altura (Pé direito)'
+                                : 'Altura (Pé direito)*'
+                        }
                         registration={register('height')}
                         onChange={(e) =>
                             handleMaskedChange('height', e, setValue)
