@@ -56,6 +56,7 @@ import { AddPhotoModal } from '../../../../../../components/modals/photoModals/A
 import { sortPavements } from '../../../../../../utils/sorts/sortPavements';
 import { formatDecimalValue } from '../../../../../../utils/formatters/formatDecimal';
 import { AuthService } from '@/services/domains/authService';
+import { extractPhotoNumber } from '@/utils/sorts/sortPhotos';
 
 export default function CreateLocationPage() {
     const { projectId, locationId } = useParams();
@@ -74,6 +75,7 @@ export default function CreateLocationPage() {
     const [debounceTimers, setDebounceTimers] = useState<
         Record<string, NodeJS.Timeout>
     >({});
+    const [isUploading, setIsUploading] = useState(false);
 
     const {
         register,
@@ -122,18 +124,22 @@ export default function CreateLocationPage() {
             );
             setPavements(mappedPavements);
 
-            const mappedPhotos =
-                locationData.photo?.map((photo) => ({
+            const mappedPhotos = (locationData.photo || [])
+                .map((photo) => ({
                     id: photo.id,
                     name: photo.name,
                     filePath: photo.filePath.startsWith('http')
                         ? photo.filePath
                         : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/sign/${process.env.NEXT_PUBLIC_SUPABASE_BUCKET_NAME}/${photo.filePath}`,
                     selectedForPdf: photo.selectedForPdf,
-                })) || [];
+                }))
+                .sort(
+                    (a, b) =>
+                        extractPhotoNumber(a.name) - extractPhotoNumber(b.name),
+                );
 
             setLocation(locationData);
-            setAllPhotos(mappedPhotos || []);
+            setAllPhotos(mappedPhotos);
 
             setValue('name', getLocationLabelByValue(locationData.name));
             setValue('locationType', locationData.locationType);
@@ -236,14 +242,21 @@ export default function CreateLocationPage() {
 
     const handlePhotosAdded = useCallback(
         (files: File[]) => {
+            if (isUploading) {
+                toast.error('Aguarde o upload atual terminar');
+                return;
+            }
+
+            setIsUploading(true);
+
             const tempPhotos = files.map((file) => ({
                 file,
                 tempUrl: URL.createObjectURL(file),
-                filePath: `temp-${file.name}`,
+                filePath: `temp-${crypto.randomUUID()}-${file.name}`,
                 selectedForPdf: false,
-                id: `temp-${Date.now()}-${Math.random()
-                    .toString(36)
-                    .substr(2, 9)}`,
+                id: `temp-${crypto.randomUUID()}`,
+                name: `Uploading-${file.name}`,
+                isTemp: true,
             }));
 
             setAllPhotos((prev) => [...prev, ...tempPhotos]);
@@ -257,26 +270,43 @@ export default function CreateLocationPage() {
 
                     const uploadedPhotos = response.data.map((photo) => ({
                         id: photo.id,
+                        name: photo.name,
                         filePath: photo.filePath.startsWith('http')
                             ? photo.filePath
                             : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/sign/${process.env.NEXT_PUBLIC_SUPABASE_BUCKET_NAME}/${photo.filePath}`,
                         selectedForPdf: false,
+                        isTemp: false,
                     }));
 
-                    setAllPhotos((prev) => [
-                        ...prev.filter((p) => !p.id?.startsWith('temp-')),
-                        ...uploadedPhotos,
-                    ]);
+                    setAllPhotos((prev) => {
+                        const withoutTemps = prev.filter((p) => !p.isTemp);
+
+                        const allRealPhotos = [
+                            ...withoutTemps,
+                            ...uploadedPhotos,
+                        ];
+
+                        return allRealPhotos.sort(
+                            (a, b) =>
+                                extractPhotoNumber(a.name) -
+                                extractPhotoNumber(b.name),
+                        );
+                    });
                 } catch (error) {
                     console.error('Upload failed:', error);
+                    const tempIds = tempPhotos.map((temp) => temp.id);
                     setAllPhotos((prev) =>
-                        prev.filter((p) => !p.id?.startsWith('temp-')),
+                        prev.filter((p) =>
+                            p.id ? !tempIds.includes(p.id) : true,
+                        ),
                     );
                     toast.error('Falha no upload das fotos');
+                } finally {
+                    setIsUploading(false);
                 }
             })();
         },
-        [locationId],
+        [locationId, isUploading],
     );
 
     const handleTogglePhotoSelection = useCallback(
@@ -322,7 +352,9 @@ export default function CreateLocationPage() {
             setIsLoading(true);
             await PhotoService.delete(photoId);
             setAllPhotos((prev) =>
-                prev.filter((photo) => photo.id !== photoId),
+                prev.filter((photo) =>
+                    photo.id ? photo.id !== photoId : true,
+                ),
             );
             toast.success('Foto excluída com sucesso');
         } catch (error) {
@@ -436,6 +468,27 @@ export default function CreateLocationPage() {
         }
     };
 
+    const handleSaveRotatedPhoto = async (
+        photoId: string,
+        rotation: number,
+    ) => {
+        try {
+            await PhotoService.rotatePhoto(photoId, rotation);
+
+            const updatedPhotosResponse = await PhotoService.listByLocation(
+                locationId as string,
+                true,
+            );
+            setAllPhotos(updatedPhotosResponse.data);
+
+            toast.success('Foto rotacionada e salva com sucesso!');
+        } catch (error) {
+            console.error('Erro ao rotacionar foto:', error);
+            toast.error('Erro ao rotacionar a foto');
+            throw error;
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-svh w-screen">
@@ -505,18 +558,22 @@ export default function CreateLocationPage() {
                         <button
                             type="button"
                             className={`bg-white flex items-center justify-center gap-2 rounded-md shadow-sm text-primary py-4 px-6 hover:shadow-md cursor-pointer ${
-                                isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                                isLoading || isUploading
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : ''
                             }`}
                             onClick={() => setShowPhotoOptionsModal(true)}
-                            disabled={isLoading}
+                            disabled={isLoading || isUploading}
                         >
                             <CameraIcon className="w-6 h-6" />
-                            <span>Adicionar Foto</span>
+                            <span>
+                                {isUploading ? 'Enviando...' : 'Adicionar Foto'}
+                            </span>
                         </button>
 
-                        {allPhotos.map((photo, index) => (
+                        {allPhotos.map((photo) => (
                             <PhotoCard
-                                key={`photo-${photo.id}-${index}`}
+                                key={photo.id}
                                 photo={{
                                     id: photo.id || '',
                                     name: photo.name || '',
@@ -527,9 +584,16 @@ export default function CreateLocationPage() {
                                 }}
                                 onSelect={handleTogglePhotoSelection}
                                 onDelete={handleDeletePhoto}
-                                index={index}
+                                index={allPhotos.indexOf(photo)}
                                 isVisitor={isVisitor}
                                 disabled={isLoading}
+                                onSaveRotatedPhoto={handleSaveRotatedPhoto}
+                                allPhotos={allPhotos.map((p) => ({
+                                    id: p.id || '',
+                                    filePath: p.tempUrl || p.filePath,
+                                    file: p.file,
+                                    name: p.name,
+                                }))}
                             />
                         ))}
                     </div>
@@ -733,10 +797,12 @@ export default function CreateLocationPage() {
                     <CustomButton
                         icon={<SaveIcon />}
                         type="submit"
-                        disabled={isLoading}
+                        disabled={isLoading || isUploading}
                         className="px-8 py-3"
                     >
-                        {isLoading ? 'Salvando...' : 'Salvar Local'}
+                        {isLoading || isUploading
+                            ? 'Salvando...'
+                            : 'Salvar Local'}
                     </CustomButton>
                 </div>
             </form>
@@ -745,7 +811,7 @@ export default function CreateLocationPage() {
                 isOpen={showPhotoOptionsModal}
                 onClose={() => setShowPhotoOptionsModal(false)}
                 onPhotosAdded={handlePhotosAdded}
-                isLoading={isLoading}
+                isLoading={isLoading || isUploading}
             />
         </div>
     );
