@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon, SearchIcon } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link'; // ← Adicionar este import
+import Link from 'next/link';
 import { CustomFormInput } from '../forms/CustomFormInput';
 import { ReactNode } from 'react';
 
