@@ -118,7 +118,7 @@ export default function CreateLocationPage() {
             ]);
 
             const locationData = locationResponse.data;
-
+            console.log(locationData);
             const mappedPavements = mapPavementToDropdownOptions(
                 pavementsResponse.data,
             );
@@ -412,6 +412,7 @@ export default function CreateLocationPage() {
 
     const onSubmit = async (data: UpdateLocationFormSchema) => {
         try {
+            console.log(data);
             setIsLoading(true);
 
             if (isNormalCamera && allPhotos.length < 5) {
@@ -425,11 +426,18 @@ export default function CreateLocationPage() {
             formData.append('locationType', data.locationType);
             if (data.facadeObservation)
                 formData.append('facadeObservation', data.facadeObservation);
-            if (data.height) {
-                const heightValue = data.height.replace(',', '.');
-                const heightNumber = parseFloat(heightValue);
-
-                formData.append('height', heightNumber.toString());
+            if (data.height !== undefined) {
+                if (data.height.trim() === '') {
+                    formData.append('height', '');
+                } else {
+                    const heightValue = data.height.replace(',', '.');
+                    const heightNumber = parseFloat(heightValue);
+                    if (!isNaN(heightNumber)) {
+                        formData.append('height', heightNumber.toString());
+                    } else {
+                        formData.append('height', '');
+                    }
+                }
             }
             if (data.pavementId) formData.append('pavementId', data.pavementId);
 
@@ -646,32 +654,37 @@ export default function CreateLocationPage() {
                     </div>
                 )}
 
-                <div>
-                    <div className="w-full relative flex justify-start py-3">
-                        <h2 className="text-2xl font-sans bg-background px-2 ml-8">
-                            Altura (m)
-                        </h2>
-                        <hr className="w-full h-px absolute border-foreground top-1/2 left-0 -z-10" />
+                {!isFacade && (
+                    <div>
+                        <div className="w-full relative flex justify-start py-3">
+                            <h2 className="text-2xl font-sans bg-background px-2 ml-8">
+                                Altura (m)
+                            </h2>
+                            <hr className="w-full h-px absolute border-foreground top-1/2 left-0 -z-10" />
+                        </div>
+                        <CustomFormInput
+                            icon={<RulerIcon />}
+                            label={
+                                isExternal
+                                    ? 'Altura (Pé direito)'
+                                    : 'Altura (Pé direito)*'
+                            }
+                            registration={register('height')}
+                            onChange={(e) =>
+                                handleMaskedChange('height', e, setValue)
+                            }
+                            defaultValue={location?.height || ''}
+                            error={errors.height?.message}
+                            id="HeightInput"
+                            inputMode="decimal"
+                            disabled={isLoading}
+                            maxLength={6}
+                        />
+                        <p className="text-sm text-gray-500 mt-1">
+                            Use ponto ou vírgula para decimais (ex: 2.5 ou 2,5)
+                        </p>
                     </div>
-                    <CustomFormInput
-                        icon={<RulerIcon />}
-                        label={
-                            isExternal
-                                ? 'Altura (Pé direito)'
-                                : 'Altura (Pé direito)*'
-                        }
-                        registration={register('height')}
-                        onChange={(e) =>
-                            handleMaskedChange('height', e, setValue)
-                        }
-                        defaultValue={location?.height || ''}
-                        error={errors.height?.message}
-                        id="HeightInput"
-                        inputMode="decimal"
-                        disabled={isLoading}
-                        maxLength={6}
-                    />
-                </div>
+                )}
 
                 <div className="space-y-6">
                     <div className="w-full relative flex justify-start">
