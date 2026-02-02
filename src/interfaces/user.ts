@@ -1,15 +1,14 @@
-import { cameraType } from '../constants/cameraType';
-import { userRole } from '../constants/userRole';
+import { cameraTypes, userRoles } from '../constants';
 
-type UserRole = (typeof userRole)[number]['value'];
-type CameraType = (typeof cameraType)[number]['value'];
+type UserRoles = (typeof userRoles)[number]['value'];
+type CameraTypes = (typeof cameraTypes)[number]['value'];
 
 export interface userProps {
     id: string;
     name: string;
     email: string;
     password: string;
-    role: UserRole;
+    role: UserRoles;
     status: boolean;
-    cameraType?: CameraType;
+    cameraType?: CameraTypes;
 }

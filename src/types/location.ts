@@ -1,5 +1,5 @@
-import { locationType, pavements, surfaceType } from '../constants';
+import { locationTypes, pavements, surfaceTypes } from '../constants';
 
-export type LocationType = (typeof locationType)[number]['value'];
-export type SurfaceType = (typeof surfaceType)[number]['value'];
-export type pavementsType = (typeof pavements)[number]['value'];
+export type LocationTypes = (typeof locationTypes)[number]['value'];
+export type SurfaceTypes = (typeof surfaceTypes)[number]['value'];
+export type pavementsTypes = (typeof pavements)[number]['value'];

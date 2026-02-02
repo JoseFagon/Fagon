@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { locationOptions } from '../../constants';
-import { locationType as locationTypeOptions } from '../../constants/locationType';
+import { locationTypes as locationTypeOptions } from '../../constants';
 import { LocationProps } from '../../interfaces/location';
 import {
     getLocationLabelByValue,
