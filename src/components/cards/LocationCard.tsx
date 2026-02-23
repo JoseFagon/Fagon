@@ -62,7 +62,7 @@ export function LocationCard({
             }
 
             setShowDeleteModal(true);
-        }, 3000);
+        }, 2500);
     };
 
     const handlePressEnd = () => {
