@@ -1,4 +1,3 @@
-// CustomDropdownInput.tsx
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import { useState, forwardRef } from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
@@ -47,7 +46,6 @@ export const CustomDropdownInput = forwardRef<
             const newSelectedValue = option.value;
             onOptionSelected?.(newSelectedValue);
 
-            // Se tiver registration, chama o onChange para atualizar o react-hook-form
             if (registration?.onChange) {
                 const event = {
                     target: {
@@ -68,7 +66,6 @@ export const CustomDropdownInput = forwardRef<
         return (
             <div className={`w-full mx-auto ${className}`} ref={ref}>
                 <div className="relative">
-                    {/* Input hidden para o react-hook-form */}
                     {registration && (
                         <input
                             type="hidden"
