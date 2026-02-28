@@ -21,6 +21,7 @@ export function AddPhotoModal({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
+    const MAX_FILES = 10;
 
     const openCamera = () => {
         cameraInputRef.current?.click();
@@ -41,12 +42,20 @@ export function AddPhotoModal({
 
             const files = Array.from(e.target.files);
 
-            const validFiles = files.map((file) => {
+            if (files.length > MAX_FILES) {
+                toast.error(`Selecione no máximo ${MAX_FILES} fotos por vez`);
+                setUploading(false);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                if (cameraInputRef.current) cameraInputRef.current.value = '';
+                return;
+            }
+
+            const validFiles = files.map((file, index) => {
                 if (!(file instanceof File)) {
                     const fileLike = file as { name?: string; type?: string };
                     return new File(
                         [file as BlobPart],
-                        fileLike.name || `photo-${Date.now()}.jpg`,
+                        fileLike.name || `photo-${Date.now()}-${index}.jpg`,
                         {
                             type: fileLike.type || 'image/jpeg',
                         },
@@ -136,15 +145,20 @@ export function AddPhotoModal({
                                         disabled={isLoading || uploading}
                                         className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {uploading ? (
-                                            <Loader2Icon className="w-5 h-5 animate-spin" />
-                                        ) : (
-                                            <ImageIcon className="w-5 h-5" />
-                                        )}
-                                        <span>
-                                            {uploading
-                                                ? 'Processando...'
-                                                : 'Escolher da galeria'}
+                                        <div className="flex items-center justify-center gap-2 w-full">
+                                            {uploading ? (
+                                                <Loader2Icon />
+                                            ) : (
+                                                <ImageIcon />
+                                            )}
+                                            <span>
+                                                {uploading
+                                                    ? 'Processando...'
+                                                    : 'Escolher da galeria'}
+                                            </span>
+                                        </div>
+                                        <span className="text-xs text-gray-500 mt-1">
+                                            Máximo {MAX_FILES} fotos por vez
                                         </span>
                                     </button>
                                 </div>
