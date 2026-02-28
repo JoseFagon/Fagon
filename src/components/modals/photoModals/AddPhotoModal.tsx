@@ -143,7 +143,7 @@ export function AddPhotoModal({
                                     <button
                                         onClick={openGallery}
                                         disabled={isLoading || uploading}
-                                        className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="relative flex flex-col items-center justify-center gap-2 w-full py-3 px-4 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <div className="flex items-center justify-center gap-2 w-full">
                                             {uploading ? (
